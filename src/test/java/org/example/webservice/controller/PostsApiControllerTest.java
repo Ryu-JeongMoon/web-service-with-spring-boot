@@ -5,7 +5,6 @@ import org.example.webservice.domain.Posts;
 import org.example.webservice.domain.PostsRepository;
 import org.example.webservice.dto.PostsSaveRequestDto;
 import org.example.webservice.dto.PostsUpdateRequestDto;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,10 +48,10 @@ class PostsApiControllerTest {
 
     private MockMvc mvc;
 
-    @AfterEach
-    public void tearDown() throws Exception {
-        postsRepository.deleteAll();
-    }
+//    @AfterEach
+//    public void tearDown() throws Exception {
+//        postsRepository.deleteAll();
+//    }
 
     @BeforeEach
     void setUp() {
@@ -63,7 +62,7 @@ class PostsApiControllerTest {
 
     @Test
     @Commit
-    public void Posts_등록된다() throws Exception {
+    public void postsInsert() throws Exception {
         //given
         String title = "title";
         String content = "content";
