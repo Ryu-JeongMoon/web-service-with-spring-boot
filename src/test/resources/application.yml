@@ -10,7 +10,7 @@ spring:
 
     generate-ddl: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
 
     properties:
       hibernate:
@@ -18,12 +18,19 @@ spring:
         format_sql: true
 
   profiles:
-    include: oauth,google
+    include: oauth, google
 
   session:
     store-type: jdbc
-    jdbc:
-      initialize-schema: always
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test
+            client-secret: test
+            scope: profile,email
 
 #  jackson:
 #    serialization: false
