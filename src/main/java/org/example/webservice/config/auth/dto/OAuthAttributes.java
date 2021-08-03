@@ -31,6 +31,9 @@ public class OAuthAttributes {
     public static OAuthAttributes of(String registrationId,
                                      String userNameAttributeName,
                                      Map<String, Object> attributes) {
+        if ("kakao".equals(registrationId))
+            return ofKakao("id", attributes);
+
         if ("naver".equals(registrationId))
             return ofNaver("id", attributes);
 
@@ -57,6 +60,24 @@ public class OAuthAttributes {
                 .email((String) response.get("email"))
                 .picture((String) response.get("profile_image"))
                 .attributes(response)
+                .nameAttributeKey(userNameAttributeName)
+                .build();
+    }
+
+    private static OAuthAttributes ofKakao(String userNameAttributeName,
+                                           Map<String, Object> attributes) {
+        /** 주의
+         * email 은 kakaoAccount 에 있고, nickname & profile_image_url 은 kakaoProfile 에 있음
+         */
+
+        Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+        Map<String, Object> kakaoProfile = (Map<String, Object>) kakaoAccount.get("profile");
+
+        return OAuthAttributes.builder()
+                .name((String) kakaoProfile.get("nickname"))
+                .email((String) kakaoAccount.get("email"))
+                .picture((String) kakaoProfile.get("profile_image_url"))
+                .attributes(attributes)
                 .nameAttributeKey(userNameAttributeName)
                 .build();
     }
