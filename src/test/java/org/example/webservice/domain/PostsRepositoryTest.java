@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Commit;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,7 +40,6 @@ class PostsRepositoryTest {
     }
 
     @Test
-    @Commit
     void BaseTimeEntity() {
         LocalDateTime longTimeAgo = LocalDateTime.of(2021, 3, 24, 0, 0, 0);
         postsRepository.save(Posts.builder()
@@ -53,8 +51,6 @@ class PostsRepositoryTest {
         List<Posts> postsList = postsRepository.findAll();
 
         Posts posts = postsList.get(0);
-
-        log.info("createDate = {}, modifiedDate = {}", posts.getCreateDate(), posts.getModifiedDate());
 
         assertThat(posts.getCreateDate().isAfter(longTimeAgo));
         assertThat(posts.getModifiedDate().isAfter(longTimeAgo));

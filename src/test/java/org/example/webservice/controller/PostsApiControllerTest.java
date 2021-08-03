@@ -5,28 +5,30 @@ import org.example.webservice.domain.Posts;
 import org.example.webservice.domain.PostsRepository;
 import org.example.webservice.dto.PostsSaveRequestDto;
 import org.example.webservice.dto.PostsUpdateRequestDto;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.annotation.Commit;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
-import javax.persistence.EntityManager;
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@RunWith(SpringRunner.class)
 @Transactional
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class PostsApiControllerTest {
@@ -38,9 +40,6 @@ class PostsApiControllerTest {
     private TestRestTemplate restTemplate;
 
     @Autowired
-    private EntityManager em;
-
-    @Autowired
     private PostsRepository postsRepository;
 
     @Autowired
@@ -48,20 +47,21 @@ class PostsApiControllerTest {
 
     private MockMvc mvc;
 
-//    @AfterEach
-//    public void tearDown() throws Exception {
-//        postsRepository.deleteAll();
-//    }
+    @AfterEach
+    public void tearDown() throws Exception {
+        postsRepository.deleteAll();
+    }
 
     @BeforeEach
     void setUp() {
         mvc = MockMvcBuilders
                 .webAppContextSetup(context)
+                .apply(springSecurity())
                 .build();
     }
 
     @Test
-    @Commit
+    @WithMockUser(roles = "USER")
     public void postsInsert() throws Exception {
         //given
         String title = "title";
@@ -72,22 +72,19 @@ class PostsApiControllerTest {
                 .author("author")
                 .build();
 
-        String url = "http://localhost:" + port + "/api/v1/posts";
+        String url = "http://localhost:8080/api/v1/posts";
 
         //when
-        ResponseEntity<Long> responseEntity = restTemplate.postForEntity(url, requestDto, Long.class);
+        mvc.perform(post(url)
+                        .contentType(MediaType.APPLICATION_JSON_UTF8)
+                        .content(new ObjectMapper().writeValueAsString(requestDto)))
+                .andDo(print())
+                .andExpect(status().isOk());
 
-        //then
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(responseEntity.getBody()).isGreaterThan(0L);
-
-        List<Posts> all = postsRepository.findAll();
-        assertThat(all.get(0).getTitle()).isEqualTo(title);
-        assertThat(all.get(0).getContent()).isEqualTo(content);
     }
 
     @Test
-    @Commit
+    @WithMockUser(roles = "USER")
     public void postsUpdate() throws Exception {
         Posts savePosts = postsRepository.save(Posts.builder()
                 .title("title")
@@ -109,12 +106,13 @@ class PostsApiControllerTest {
         mvc.perform(put(url)
                         .contentType(MediaType.APPLICATION_JSON_UTF8)
                         .content(new ObjectMapper().writeValueAsString(requestDto)))
+                .andDo(print())
                 .andExpect(status().isOk());
 
-        List<Posts> all = postsRepository.findAll();
+        Posts posts = postsRepository.findById(updateId).orElseThrow(() -> new RuntimeException("없는 id"));
 
-        assertThat(all.get(0).getTitle()).isEqualTo(expectedTitle);
-        assertThat(all.get(0).getContent()).isEqualTo(expectedContent);
+        assertThat(posts.getTitle()).isEqualTo(expectedTitle);
+        assertThat(posts.getContent()).isEqualTo(expectedContent);
 
         // 뭐 땜시 안 됐던 걸까?!
     }
